@@ -1,10 +1,22 @@
 require('dotenv').config();
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenAI } = require("@google/genai");
 const { logArabic, fixArabic } = require('../utils/logger');
 const { getKey } = require('../utils/config');
 const chalk = require('chalk');
 
 const KEY_ENV_VARS = ['GEMINI_API_KEY', 'GOOGLE_API_KEY', 'ARABDEVS_API_KEY'];
+const MODEL_CANDIDATES = [
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+  "gemini-1.5-flash-latest",
+  "gemini-1.5-pro-latest",
+  "gemini-1.0-pro",
+  "gemini-pro"
+];
+const GENERATION_CONFIG = {
+  maxOutputTokens: 8000,
+  temperature: 0.7,
+};
 
 // Get API key from config or env
 function getApiKey() {
@@ -37,34 +49,24 @@ async function sendToAI(promptText) {
     return null;
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  
-  const modelCandidates = [
-    "gemini-1.5-flash-latest",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro-latest",
-    "gemini-1.5-pro",
-    "gemini-1.0-pro",
-    "gemini-pro"
-  ];
-  
+  const genAI = new GoogleGenAI({ apiKey });
   const errors = [];
   
-  for (const modelName of modelCandidates) {
+  for (const modelName of MODEL_CANDIDATES) {
     try {
       logArabic(`محاولة الاتصال بالموديل: ${modelName}`, 'info');
       
-      const model = genAI.getGenerativeModel({ 
+      const result = await genAI.models.generateContent({
         model: modelName,
-        generationConfig: {
-          maxOutputTokens: 8000,
-          temperature: 0.7,
-        }
+        contents: promptText,
+        generationConfig: GENERATION_CONFIG,
       });
       
-      const result = await model.generateContent(promptText);
-      const response = await result.response;
-      const text = response.text();
+      const text = typeof result.text === 'function'
+        ? result.text()
+        : (result.response && typeof result.response.text === 'function'
+            ? result.response.text()
+            : '');
       
       if (!text || text.trim() === '') {
         throw new Error('الاستجابة فارغة');

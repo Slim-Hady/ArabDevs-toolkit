@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { GoogleGenAI } = require("@google/genai");
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -24,16 +24,15 @@ if (!apiKey) {
   process.exit(1);
 }
 
-// اختبار الاتصال
-const genAI = new GoogleGenerativeAI(apiKey);
-
 async function test() {
   try {
     console.log('⏳ جاري الاختبار...');
     
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const result = await model.generateContent("قل 'مرحبا' بالعربية فقط");
-    const response = await result.response;
+    const genAI = new GoogleGenAI({ apiKey });
+    const response = await genAI.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: "قل 'مرحبا' بالعربية فقط"
+    });
     const text = response.text();
     
     console.log(' نجح الاتصال!');
