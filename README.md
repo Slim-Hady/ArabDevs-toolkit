@@ -2,6 +2,12 @@
 
 Simple Arabic-first CLI that connects to Google Gemini to explain, debug, and document codebases. Built by Arab developers for Arab developers — fast setup, clear Arabic logs, and RTL-safe output in any terminal.
 
+### Contribution
+- Mohamed Abdelhady (me)
+- Adham Ashraf 
+- Gamal Khaled
+- Ahmed Sabry
+
 ### Requirements
 - Node.js 20+ (required by `commander@14` and `@google/genai`)
 - npm 9+
