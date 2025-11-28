@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-// قراءة المفتاح
 const configPath = path.join(os.homedir(), '.arabdevs-config.json');
 let apiKey = null;
 
@@ -33,12 +32,17 @@ async function test() {
       model: "gemini-2.5-flash",
       contents: "قل 'مرحبا' بالعربية فقط"
     });
-    const text = response.text();
+    
+    if (response.error) {
+      throw new Error(JSON.stringify(response.error));
+    }
+    
+    const text = response.text || '';
     
     console.log(' نجح الاتصال!');
     console.log(' الرد:', text);
   } catch (error) {
-    console.error('❌ فشل الاختبار!');
+    console.error(' فشل الاختبار!');
     console.error('السبب:', error.message);
     
     if (error.message.includes('API_KEY_INVALID')) {

@@ -8,10 +8,8 @@ const KEY_ENV_VARS = ['GEMINI_API_KEY', 'GOOGLE_API_KEY', 'ARABDEVS_API_KEY'];
 const MODEL_CANDIDATES = [
   "gemini-2.5-flash",
   "gemini-2.0-flash",
-  "gemini-1.5-flash-latest",
-  "gemini-1.5-pro-latest",
-  "gemini-1.0-pro",
-  "gemini-pro"
+  "gemini-1.5-flash",
+  "gemini-1.5-pro"
 ];
 const GENERATION_CONFIG = {
   maxOutputTokens: 8000,
@@ -62,11 +60,13 @@ async function sendToAI(promptText) {
         generationConfig: GENERATION_CONFIG,
       });
       
-      const text = typeof result.text === 'function'
-        ? result.text()
-        : (result.response && typeof result.response.text === 'function'
-            ? result.response.text()
-            : '');
+      // Check for errors in response
+      if (result.error) {
+        throw new Error(JSON.stringify(result.error));
+      }
+      
+      // Access text as property (new SDK format)
+      const text = result.text || (result.response && result.response.text) || '';
       
       if (!text || text.trim() === '') {
         throw new Error('الاستجابة فارغة');
@@ -74,21 +74,46 @@ async function sendToAI(promptText) {
       
       return text;
     } catch (error) {
-      errors.push({ modelName, error: error.message });
+      let errorMsg = error.message;
+      let errorCode = null;
       
-      if (error.message.includes('API key') || error.message.includes('API_KEY_INVALID')) {
+      // Parse JSON error objects
+      try {
+        const parsed = JSON.parse(errorMsg);
+        if (parsed.error) {
+          errorCode = parsed.error.code;
+          errorMsg = parsed.error.message || JSON.stringify(parsed.error);
+        }
+      } catch (e) {
+        // Not JSON, use message as-is
+      }
+      
+      errors.push({ modelName, error: errorMsg });
+      
+      // Handle specific error codes
+      if (errorCode === 503 || errorMsg.includes('overloaded') || errorMsg.includes('UNAVAILABLE')) {
+        logArabic(`الموديل ${modelName} مشغول حالياً، جاري المحاولة مع موديل آخر...`, 'warning');
+        continue; // Try next model
+      }
+      
+      if (errorCode === 404 || errorMsg.includes('not found') || errorMsg.includes('NOT_FOUND')) {
+        logArabic(`الموديل ${modelName} غير متاح`, 'warning');
+        continue; // Try next model
+      }
+      
+      if (errorMsg.includes('API key') || errorMsg.includes('API_KEY_INVALID')) {
         logArabic('المفتاح غير صحيح أو منتهي', 'error');
         console.log(chalk.yellow(fixArabic('احصل على مفتاح جديد من: https://aistudio.google.com/')));
         return null;
       }
       
-      if (error.message.includes('quota') || error.message.includes('RESOURCE_EXHAUSTED')) {
+      if (errorMsg.includes('quota') || errorMsg.includes('RESOURCE_EXHAUSTED')) {
         logArabic('تم تجاوز الحد المجاني', 'error');
         console.log(chalk.yellow(fixArabic('حاول غداً أو ترقّ للباقة المدفوعة')));
         return null;
       }
       
-      if (error.message.includes('SAFETY')) {
+      if (errorMsg.includes('SAFETY')) {
         logArabic('تم رفض الطلب لأسباب أمنية', 'warning');
         return null;
       }
@@ -97,12 +122,10 @@ async function sendToAI(promptText) {
         logArabic('انتهت مهلة الاتصال', 'error');
       } else if (error.code === 'ENOTFOUND') {
         logArabic('لا يوجد اتصال بالإنترنت', 'error');
-      } else if (error.message.includes('Permission denied')) {
+      } else if (errorMsg.includes('Permission denied')) {
         logArabic('المفتاح لا يمتلك صلاحية لهذا الموديل', 'error');
-      } else if (error.message.includes('404') || error.message.includes('not found')) {
-        logArabic(`الموديل غير متاح (${modelName})`, 'warning');
       } else {
-        logArabic(`خطأ غير متوقع من ${modelName}: ${error.message}`, 'error');
+        logArabic(`خطأ من ${modelName}: ${errorMsg}`, 'error');
       }
     }
   }
