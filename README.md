@@ -82,7 +82,7 @@ npm test           # placeholder – add tests as needed
 node test-direct.js  # quick API connectivity test
 ```
 
-### Contributing
+### How to make a contribution?
 1. Fork the repo & create a branch.  
 2. Make changes with clear inline comments only where needed.  
 3. Run lint/tests (if configured).  
