@@ -4,7 +4,7 @@ Simple Arabic-first CLI that connects to Google Gemini to explain, debug, and do
 
 ### Contribution
 - Mohamed Abdelhady (me)
-- Adham Ashraf 
+- Adham Ashraf
 - Gamal Khaled
 - Ahmed Sabry
 
