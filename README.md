@@ -89,4 +89,4 @@ node test-direct.js  # quick API connectivity test
 4. Submit a PR describing the change in plain Arabic or English—no emojis.
 
 ### License
-ISC License © ArabDevs.Feel free to fork, customize, and publish your own distributions as long as attribution remains.
+ISC License © ArabDevs. Feel free to fork, customize, and publish your own distributions as long as attribution remains.
